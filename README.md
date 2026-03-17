@@ -4,7 +4,56 @@ Word 문서를 MLA 형식으로 정리해주는 Python 앱입니다.
 
 ## 실행 방법
 
+먼저, 아래 명령들은 코드 파일 안이 아니라 **터미널(명령줄 창)** 에 입력합니다.
+
+- Windows: `PowerShell` 또는 `명령 프롬프트(CMD)`
+- Linux/macOS: `Terminal` 앱
+
+### Windows용 실행 방법
+
+아래 Windows 명령은 모두 `PowerShell` 또는 `CMD`에서 입력합니다.
+
+#### 1) Python이 없는 경우
+
+- Microsoft Store 또는 python.org에서 Python 3 설치
+- 설치 시 `Add python.exe to PATH` 옵션 체크
+
+설치 확인:
+
+```powershell
+python --version
+```
+
+#### 2) pip가 없는 경우
+
+아래 명령으로 pip 부트스트랩 + 의존성 설치 + 앱 실행을 한 번에 진행할 수 있습니다.
+
+```powershell
+python run_app.py
+```
+
+CLI 모드:
+
+```powershell
+python run_app.py --cli
+```
+
+#### 3) pip가 이미 있는 경우
+
+```powershell
+pip install python-docx requests pywin32
+python wordFormatter.py
+```
+
+CLI 모드:
+
+```powershell
+python wordFormatter.py --cli
+```
+
 ### Python까지 자동 설치해서 실행 (Linux/macOS)
+
+아래 Linux/macOS 명령은 모두 `Terminal` 앱에서 입력합니다.
 
 Python 3가 없는 환경에서도 아래 스크립트가 Python 설치를 먼저 시도한 뒤 앱을 실행합니다.
 

@@ -288,7 +288,7 @@ def apply_common_styles(doc):
         font.name = "Cambria"
         font.size = Pt(12)
         pformat = style.paragraph_format
-        pformat.line_spacing = 2
+        pformat.line_spacing = 2.0
         pformat.space_before = Pt(0)
         pformat.space_after = Pt(0)
         pformat.first_line_indent = Inches(0.5)
@@ -309,7 +309,8 @@ def mla_format(input_file, output_file, title, student_name, professor_name, cou
 
     # 페이지 헤더 (MLA: 성 + 페이지)
     header = section.header
-    add_page_number(header, student_name)
+    last_name = student_name.split()[-1] if student_name else None
+    add_page_number(header, last_name)
 
     # 공통 스타일 적용
     apply_common_styles(doc)
@@ -346,6 +347,9 @@ def mla_format(input_file, output_file, title, student_name, professor_name, cou
         if text.strip() == "":
             continue
         p.paragraph_format.left_indent = Inches(0)
+        p.paragraph_format.line_spacing = 2.0
+        p.paragraph_format.space_before = Pt(0)
+        p.paragraph_format.space_after = Pt(0)
         if text == text.lstrip():  # no leading whitespace, so add indentation
             p.paragraph_format.first_line_indent = Inches(0.5)
         # else, already has indentation, leave as is
