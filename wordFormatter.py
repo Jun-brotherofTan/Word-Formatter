@@ -8,6 +8,10 @@ from datetime import datetime
 import os
 import requests
 import json
+import argparse
+import threading
+import tkinter as tk
+from tkinter import filedialog, messagebox, scrolledtext, ttk
 
 # ----------------------
 # Fetch book info and format to MLA
@@ -436,26 +440,10 @@ def ieee_format(input_file, output_file, title, student_name, professor_name, co
     mla_format(input_file, output_file, title, student_name, professor_name, course_name, page_limit, include_works_cited_in_limit, works_cited_input)
 
 # ----------------------
-# 유저 입력
+# 공용 실행 로직
 # ----------------------
-def main():
-    print("=== Word Formatter ===")
-    style = input("Choose style (MLA/Chicago/APA/Harvard/IEEE) [MLA]: ").strip().lower() or "mla"
-    title = input("Enter your essay title: ")
-    student_name = input("Enter your name (optional for Chicago): ")
-    professor_name = input("Enter professor's name: ")
-    course_name = input("Enter course name: ")
-    page_limit_input = input("Enter page limit (or press Enter to skip): ")
-    page_limit = int(page_limit_input) if page_limit_input.strip() else None
-    include_works_cited_in_limit = False
-    if page_limit is not None:
-        include_input = input("Include 'Works Cited' page in page limit? (y/N): ").strip().lower()
-        include_works_cited_in_limit = include_input.startswith('y')
-    works_cited_input = input("Enter works cited entries (one per line, or 'author: title' to auto-fetch, or press Enter to skip): ")
-    input_file = input("Enter path to your Word (.docx) file: ")
-
-    # 출력 파일 이름
-    output_file = os.path.splitext(input_file)[0] + "_formatted.docx"
+def format_document_by_style(style, input_file, output_file, title, student_name, professor_name, course_name, page_limit=None, include_works_cited_in_limit=False, works_cited_input=None):
+    style = (style or "mla").strip().lower()
 
     if style.startswith('m'):
         mla_format(input_file, output_file, title, student_name, professor_name, course_name, page_limit, include_works_cited_in_limit, works_cited_input)
@@ -470,6 +458,172 @@ def main():
     else:
         print("Unknown style specified — defaulting to MLA.")
         mla_format(input_file, output_file, title, student_name, professor_name, course_name, page_limit, include_works_cited_in_limit, works_cited_input)
+
+
+def run_cli():
+    print("=== Word Formatter ===")
+    style = input("Choose style (MLA/Chicago/APA/Harvard/IEEE) [MLA]: ").strip().lower() or "mla"
+    title = input("Enter your essay title: ")
+    student_name = input("Enter your name (optional for Chicago): ")
+    professor_title_choice = input("Choose professor title (doctor/professor) [professor]: ").strip().lower() or "professor"
+    professor_title = "Doctor" if professor_title_choice.startswith('d') else "Professor"
+    professor_only_name = input("Enter professor's name (without title): ").strip()
+    professor_name = f"{professor_title} {professor_only_name}" if professor_only_name else ""
+    course_name = input("Enter course name: ")
+    page_limit_input = input("Enter page limit (or press Enter to skip): ")
+    page_limit = int(page_limit_input) if page_limit_input.strip() else None
+    include_works_cited_in_limit = False
+    if page_limit is not None:
+        include_input = input("Include 'Works Cited' page in page limit? (y/N): ").strip().lower()
+        include_works_cited_in_limit = include_input.startswith('y')
+    works_cited_input = input("Enter works cited entries (one per line, or 'author: title' to auto-fetch, or press Enter to skip): ")
+    input_file = input("Enter path to your Word (.docx) file: ")
+
+    # 출력 파일 이름
+    output_file = os.path.splitext(input_file)[0] + "_formatted.docx"
+
+    format_document_by_style(style, input_file, output_file, title, student_name, professor_name, course_name, page_limit, include_works_cited_in_limit, works_cited_input)
+
+
+class WordFormatterApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Word Formatter")
+        self.root.geometry("760x760")
+        self.root.minsize(700, 650)
+
+        self.style_var = tk.StringVar(value="MLA")
+        self.title_var = tk.StringVar()
+        self.student_var = tk.StringVar()
+        self.prof_title_var = tk.StringVar(value="professor")
+        self.prof_name_var = tk.StringVar()
+        self.course_var = tk.StringVar()
+        self.page_limit_var = tk.StringVar()
+        self.include_wc_var = tk.BooleanVar(value=False)
+        self.input_file_var = tk.StringVar()
+
+        self._build_ui()
+
+    def _build_ui(self):
+        frame = ttk.Frame(self.root, padding=16)
+        frame.pack(fill=tk.BOTH, expand=True)
+
+        frame.columnconfigure(1, weight=1)
+        frame.rowconfigure(9, weight=1)
+
+        ttk.Label(frame, text="Style").grid(row=0, column=0, sticky="w", pady=4)
+        ttk.Combobox(frame, textvariable=self.style_var, values=["MLA", "Chicago", "APA", "Harvard", "IEEE"], state="readonly").grid(row=0, column=1, sticky="ew", pady=4)
+
+        ttk.Label(frame, text="Essay title").grid(row=1, column=0, sticky="w", pady=4)
+        ttk.Entry(frame, textvariable=self.title_var).grid(row=1, column=1, sticky="ew", pady=4)
+
+        ttk.Label(frame, text="Student name").grid(row=2, column=0, sticky="w", pady=4)
+        ttk.Entry(frame, textvariable=self.student_var).grid(row=2, column=1, sticky="ew", pady=4)
+
+        ttk.Label(frame, text="Professor title").grid(row=3, column=0, sticky="w", pady=4)
+        ttk.Combobox(frame, textvariable=self.prof_title_var, values=["doctor", "professor"], state="readonly").grid(row=3, column=1, sticky="ew", pady=4)
+
+        ttk.Label(frame, text="Professor name (without title)").grid(row=4, column=0, sticky="w", pady=4)
+        ttk.Entry(frame, textvariable=self.prof_name_var).grid(row=4, column=1, sticky="ew", pady=4)
+
+        ttk.Label(frame, text="Course name").grid(row=5, column=0, sticky="w", pady=4)
+        ttk.Entry(frame, textvariable=self.course_var).grid(row=5, column=1, sticky="ew", pady=4)
+
+        ttk.Label(frame, text="Page limit (optional)").grid(row=6, column=0, sticky="w", pady=4)
+        ttk.Entry(frame, textvariable=self.page_limit_var).grid(row=6, column=1, sticky="ew", pady=4)
+
+        ttk.Checkbutton(frame, text="Include Works Cited in page limit", variable=self.include_wc_var).grid(row=7, column=1, sticky="w", pady=4)
+
+        ttk.Label(frame, text="Input .docx file").grid(row=8, column=0, sticky="w", pady=4)
+        file_row = ttk.Frame(frame)
+        file_row.grid(row=8, column=1, sticky="ew", pady=4)
+        file_row.columnconfigure(0, weight=1)
+        ttk.Entry(file_row, textvariable=self.input_file_var).grid(row=0, column=0, sticky="ew")
+        ttk.Button(file_row, text="Browse", command=self._browse_file).grid(row=0, column=1, padx=(8, 0))
+
+        ttk.Label(frame, text="Works cited entries (one per line)").grid(row=9, column=0, sticky="nw", pady=4)
+        self.works_cited_text = scrolledtext.ScrolledText(frame, wrap=tk.WORD, height=10)
+        self.works_cited_text.grid(row=9, column=1, sticky="nsew", pady=4)
+
+        action_row = ttk.Frame(frame)
+        action_row.grid(row=10, column=1, sticky="e", pady=(12, 0))
+        self.run_button = ttk.Button(action_row, text="Format Document", command=self._start_formatting)
+        self.run_button.pack(side=tk.RIGHT)
+
+    def _browse_file(self):
+        file_path = filedialog.askopenfilename(
+            title="Select Word document",
+            filetypes=[("Word Document", "*.docx")]
+        )
+        if file_path:
+            self.input_file_var.set(file_path)
+
+    def _start_formatting(self):
+        self.run_button.config(state=tk.DISABLED)
+        threading.Thread(target=self._format_document, daemon=True).start()
+
+    def _format_document(self):
+        try:
+            style = self.style_var.get().strip() or "MLA"
+            title = self.title_var.get().strip()
+            student_name = self.student_var.get().strip()
+            prof_title_choice = self.prof_title_var.get().strip().lower() or "professor"
+            prof_title = "Doctor" if prof_title_choice.startswith('d') else "Professor"
+            prof_only_name = self.prof_name_var.get().strip()
+            professor_name = f"{prof_title} {prof_only_name}" if prof_only_name else ""
+            course_name = self.course_var.get().strip()
+            input_file = self.input_file_var.get().strip()
+            works_cited_input = self.works_cited_text.get("1.0", tk.END).strip()
+
+            if not title:
+                raise ValueError("Essay title is required.")
+            if not input_file:
+                raise ValueError("Input .docx file is required.")
+            if not os.path.exists(input_file):
+                raise ValueError("Input file does not exist.")
+            if not input_file.lower().endswith(".docx"):
+                raise ValueError("Please select a .docx file.")
+
+            page_limit_text = self.page_limit_var.get().strip()
+            page_limit = int(page_limit_text) if page_limit_text else None
+
+            output_file = os.path.splitext(input_file)[0] + "_formatted.docx"
+
+            format_document_by_style(
+                style,
+                input_file,
+                output_file,
+                title,
+                student_name,
+                professor_name,
+                course_name,
+                page_limit,
+                self.include_wc_var.get(),
+                works_cited_input
+            )
+
+            self.root.after(0, lambda: messagebox.showinfo("Success", f"Formatted document saved:\n{output_file}"))
+        except Exception as e:
+            self.root.after(0, lambda: messagebox.showerror("Error", str(e)))
+        finally:
+            self.root.after(0, lambda: self.run_button.config(state=tk.NORMAL))
+
+
+def run_gui():
+    root = tk.Tk()
+    WordFormatterApp(root)
+    root.mainloop()
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Word Formatter application")
+    parser.add_argument("--cli", action="store_true", help="Run in CLI mode instead of GUI mode")
+    args = parser.parse_args()
+
+    if args.cli:
+        run_cli()
+    else:
+        run_gui()
 
 if __name__ == "__main__":
     main()
